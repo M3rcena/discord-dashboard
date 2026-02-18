@@ -1,0 +1,55 @@
+{
+  "name": "@developer.krd/discord-dashboard",
+  "version": "0.1.0",
+  "description": "Plug-and-play Discord bot dashboard with built-in frontend and Discord OAuth2 login.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "example": "tsx examples/basic-bot.ts",
+    "real-bot": "tsx examples/real-bot/main.ts",
+    "typecheck": "tsc --noEmit",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "discord",
+    "dashboard",
+    "oauth2",
+    "express",
+    "bot"
+  ],
+  "dependencies": {
+    "compression": "^1.8.0",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/compression": "^1.7.5",
+    "@types/express": "^4.17.22",
+    "@types/express-session": "^1.18.0",
+    "@types/node": "^22.13.10",
+    "discord.js": "^14.25.1",
+    "dotenv": "^16.4.7",
+    "tsup": "^8.4.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.2"
+  }
+}

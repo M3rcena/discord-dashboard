@@ -1,0 +1,43 @@
+{
+  "meta": {
+    "saveCount": 8,
+    "lastAction": "dashboard:onsave:guild-flex",
+    "lastUpdatedAt": "2026-02-18T07:48:18.264Z",
+    "lastUpdatedBy": "alex0724x2"
+  },
+  "users": {
+    "1072592763427754034": {
+      "profileBio": ";ll",
+      "petsEnabled": true,
+      "favoritePetName": "Luna",
+      "petNotifications": false,
+      "updatedAt": "2026-02-18T06:56:36.518Z"
+    }
+  },
+  "guilds": {
+    "111226773361971200": {
+      "prefix": "=",
+      "moderationEnabled": false,
+      "logChannelId": "",
+      "welcomeChannelId": "",
+      "pollButtons": [
+        "✅ Yes",
+        "❌ No"
+      ],
+      "pollMessage": "What should we do for the next event?",
+      "updatedAt": "2026-02-18T07:12:10.240Z"
+    },
+    "1321792339408060519": {
+      "prefix": "=",
+      "moderationEnabled": true,
+      "logChannelId": "",
+      "welcomeChannelId": "",
+      "pollButtons": [
+        "✅ Yes",
+        "❌ No"
+      ],
+      "pollMessage": "What should we do for the next event?",
+      "updatedAt": "2026-02-18T07:48:18.264Z"
+    }
+  }
+}
