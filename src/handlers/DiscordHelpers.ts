@@ -101,4 +101,17 @@ export class DiscordHelpers implements DashboardDiscordHelpers {
   public async getGuildMember(guildId: string, userId: string): Promise<DiscordMember | null> {
     return await this.fetchDiscordWithBot<DiscordMember>(`/guilds/${guildId}/members/${userId}`);
   }
+
+  public getGuildIconUrl(guildId: string, iconHash: string | null): string | null {
+    if (!iconHash) return null;
+
+    const extension = iconHash.startsWith("a_") ? "gif" : "png";
+    return `https://cdn.discordapp.com/icons/${guildId}/${iconHash}.${extension}?size=128`;
+  }
+
+  public getUserAvatarUrl(userId: string, avatarHash: string | null): string | null {
+    if (!avatarHash) return null;
+    const extension = avatarHash.startsWith("a_") ? "gif" : "png";
+    return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${extension}?size=128`;
+  }
 }

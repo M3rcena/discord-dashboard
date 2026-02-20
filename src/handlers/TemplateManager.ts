@@ -1,31 +1,57 @@
-import type { DashboardOptions, DashboardTemplateRenderer } from "../Types";
-import { defaultDashboardTemplateRenderer } from "../templates/default";
-import { getBuiltinTemplateRenderer } from "../templates";
+import { BuiltinLayouts } from "../templates";
+import { BuiltinThemes } from "../templates/themes";
+import type { DashboardDesignConfig, DashboardOptions, DashboardTemplateRenderContext, DashboardTemplateRenderer } from "../Types";
 
 export class TemplateManager {
-    private readonly selectedTemplate: string;
-    private readonly options: DashboardOptions;
+  private layoutRenderer: DashboardTemplateRenderer;
+  private resolvedDesign: DashboardDesignConfig;
 
-    constructor(options: DashboardOptions) {
-        this.options = options;
-        this.selectedTemplate = options.uiTemplate ?? "default";
+  constructor(options: DashboardOptions) {
+    this.layoutRenderer = this.resolveLayout(options.uiTemplate);
+    this.resolvedDesign = this.resolveTheme(options.uiTheme, options.setupDesign);
+  }
+
+  private resolveLayout(layoutInput?: string | DashboardTemplateRenderer): DashboardTemplateRenderer {
+    if (typeof layoutInput === "function") {
+      return layoutInput;
     }
 
-    public getTemplateId(): string {
-        return this.selectedTemplate;
+    if (typeof layoutInput === "string" && BuiltinLayouts[layoutInput]) {
+      return BuiltinLayouts[layoutInput];
     }
 
-    public resolveRenderer(): DashboardTemplateRenderer {
-        const customRenderer = this.options.uiTemplates?.[this.selectedTemplate];
-        if (customRenderer) return customRenderer;
+    return BuiltinLayouts["default"];
+  }
 
-        const builtinRenderer = getBuiltinTemplateRenderer(this.selectedTemplate);
-        if (builtinRenderer) return builtinRenderer;
+  private resolveTheme(themeInput?: string | DashboardDesignConfig, customOverrides?: DashboardDesignConfig): DashboardDesignConfig {
+    let baseTheme: DashboardDesignConfig = {};
 
-        if (this.selectedTemplate !== "default") {
-            throw new Error(`Unknown uiTemplate '${this.selectedTemplate}'. Register it in uiTemplates.`);
-        }
-
-        return defaultDashboardTemplateRenderer;
+    if (typeof themeInput === "string" && BuiltinThemes[themeInput]) {
+      baseTheme = BuiltinThemes[themeInput];
+    } else if (typeof themeInput === "object") {
+      baseTheme = themeInput;
     }
+
+    const merged: DashboardDesignConfig = {
+      ...baseTheme,
+      ...customOverrides,
+    };
+
+    const combinedCss = [baseTheme.customCss, customOverrides?.customCss].filter((css) => css && css.trim().length > 0).join("\n\n");
+
+    if (combinedCss) {
+      merged.customCss = combinedCss;
+    }
+
+    return merged;
+  }
+
+  public render(contextBase: Omit<DashboardTemplateRenderContext, "setupDesign">): string {
+    const finalContext: DashboardTemplateRenderContext = {
+      ...contextBase,
+      setupDesign: this.resolvedDesign,
+    };
+
+    return this.layoutRenderer(finalContext);
+  }
 }

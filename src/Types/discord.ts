@@ -4,6 +4,7 @@ export interface DashboardUser {
   discriminator: string;
   avatar: string | null;
   global_name?: string | null;
+  avatarUrl?: string | null;
 }
 
 export interface DashboardGuild {

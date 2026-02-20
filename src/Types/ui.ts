@@ -27,6 +27,12 @@ export interface DashboardDesignConfig {
   info?: string;
   border?: string;
   customCss?: string;
+  surface?: string;
+  card?: string;
+  card2?: string;
+  accent?: string;
+  radiusLg?: string;
+  radiusMd?: string;
 }
 
 export interface DashboardTemplateRenderContext {
