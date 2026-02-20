@@ -5,8 +5,7 @@ import helmet from "helmet";
 import { randomBytes } from "node:crypto";
 import { createServer, type Server } from "node:http";
 import { DiscordHelpers } from "./handlers/DiscordHelpers";
-import { getBuiltinTemplateRenderer } from "./templates";
-import { renderDashboardHtml } from "./templates/templates";
+import { TemplateManager } from "./handlers/TemplateManager";
 import type { DashboardCard, DashboardContext, DashboardGuild, DashboardInstance, DashboardOptions, DashboardPlugin, DashboardScope, DashboardTemplateRenderer, DashboardUser, HomeCategory, HomeSection } from "./Types";
 
 const DISCORD_API = "https://discord.com/api/v10";
@@ -64,6 +63,7 @@ export class DiscordDashboard implements DashboardInstance {
   private server?: Server;
   private basePath: string;
   private templateRenderer: DashboardTemplateRenderer;
+  private templateManager: TemplateManager;
   private plugins: DashboardPlugin[];
 
   constructor(options: DashboardOptions) {
@@ -74,7 +74,8 @@ export class DiscordDashboard implements DashboardInstance {
     this.router = express.Router();
     this.helpers = new DiscordHelpers(options.botToken);
     this.basePath = normalizeBasePath(options.basePath);
-    this.templateRenderer = this.resolveTemplateRenderer();
+    this.templateManager = new TemplateManager(this.options);
+    this.templateRenderer = this.templateManager.resolveRenderer();
     this.plugins = options.plugins ?? [];
 
     if (!options.app && options.trustProxy !== undefined) {
@@ -529,22 +530,10 @@ export class DiscordDashboard implements DashboardInstance {
     return new Set(guilds.map((guild) => guild.id));
   }
 
-  private resolveTemplateRenderer(): DashboardTemplateRenderer {
-    const selectedTemplate = this.options.uiTemplate ?? "default";
-    const defaultRenderer: DashboardTemplateRenderer = ({ dashboardName, basePath, setupDesign }) => renderDashboardHtml(dashboardName, basePath, setupDesign);
-
-    const customRenderer = this.options.uiTemplates?.[selectedTemplate];
-    if (customRenderer) return customRenderer;
-
-    const builtinRenderer = getBuiltinTemplateRenderer(selectedTemplate);
-    if (builtinRenderer) return builtinRenderer;
-
-    if (selectedTemplate !== "default") throw new Error(`Unknown uiTemplate '${selectedTemplate}'. Register it in uiTemplates.`);
-    return defaultRenderer;
-  }
 }
 
 export { DashboardDesigner } from "./handlers/DashboardDesigner";
 export { DiscordHelpers } from "./handlers/DiscordHelpers";
+export { TemplateManager } from "./handlers/TemplateManager";
 export { builtinTemplateRenderers, getBuiltinTemplateRenderer } from "./templates";
 export * from "./Types";
