@@ -1,20 +1,4 @@
-import type { DashboardTemplateRenderer } from "../Types";
-import { renderDashboardHtml } from "./templates";
-
-function escapeHtml(value: string): string {
-  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
-}
-
-function extractDashboardScript(html: string): string {
-  const match = html.match(/<script>([\s\S]*)<\/script>\s*<\/body>\s*<\/html>\s*$/);
-  if (!match) {
-    throw new Error("Failed to resolve dashboard script for compact template.");
-  }
-
-  return match[1];
-}
-
-const compactCss = `
+export const compactAppCss = `
 :root {
   color-scheme: dark;
   --bg: #0f1221;
@@ -240,22 +224,8 @@ button.danger { background: #4a2230; border-color: rgba(255,111,145,.45); }
 }
 `;
 
-export const compactDashboardTemplateRenderer: DashboardTemplateRenderer = ({ dashboardName, basePath, setupDesign }) => {
-  const script = extractDashboardScript(renderDashboardHtml(dashboardName, basePath, setupDesign));
-  const safeName = escapeHtml(dashboardName);
-
-  const customCssBlock = setupDesign?.customCss ? `\n  <style>${setupDesign.customCss}</style>` : "";
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${safeName}</title>
-  <style>${compactCss}</style>${customCssBlock}
-</head>
-<body>
-  <div class="shell">
+export function renderCompactLayoutBody(safeName: string): string {
+  return `<div class="shell">
     <header class="topbar">
       <div class="brand">${safeName}</div>
       <div id="centerTitle" class="center-title">User Dashboard</div>
@@ -292,9 +262,30 @@ export const compactDashboardTemplateRenderer: DashboardTemplateRenderer = ({ da
         </div>
       </main>
     </div>
-  </div>
+  </div>`;
+}
 
-  <script>${script}</script>
+export function renderCompactLayoutDocument(input: {
+  safeName: string;
+  css: string;
+  customCss?: string;
+  body: string;
+  script: string;
+}): string {
+  const customCssBlock = input.customCss ? `\n  <style>${input.customCss}</style>` : "";
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${input.safeName}</title>
+  <style>${input.css}</style>${customCssBlock}
+</head>
+<body>
+  ${input.body}
+
+  <script>${input.script}</script>
 </body>
 </html>`;
-};
+}

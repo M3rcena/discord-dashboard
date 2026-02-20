@@ -7,6 +7,7 @@ export const builtinTemplateRenderers: Record<string, DashboardTemplateRenderer>
   compact: compactDashboardTemplateRenderer,
 };
 
+
 export function getBuiltinTemplateRenderer(templateId: string): DashboardTemplateRenderer | undefined {
   return builtinTemplateRenderers[templateId];
 }

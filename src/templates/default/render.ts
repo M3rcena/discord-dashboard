@@ -1,4 +1,5 @@
-import type { DashboardDesignConfig } from "../Types";
+import type { DashboardDesignConfig } from "../../Types";
+import { defaultAppCss, renderDefaultLayoutBody, renderDefaultLayoutDocument } from "./layout";
 
 const appCss = `
 :root {
@@ -342,59 +343,18 @@ function escapeHtml(value: string): string {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 
-export function renderDashboardHtml(name: string, basePath: string, setupDesign?: DashboardDesignConfig): string {
+export function renderDefaultDashboardHtml(name: string, basePath: string, setupDesign?: DashboardDesignConfig): string {
   const safeName = escapeHtml(name);
   const scriptData = JSON.stringify({ basePath, setupDesign: setupDesign ?? {} });
 
-  const customCssBlock = setupDesign?.customCss ? `\n  <style>${setupDesign.customCss}</style>` : "";
+  const body = renderDefaultLayoutBody(safeName);
 
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${safeName}</title>
-  <style>${appCss}</style>${customCssBlock}
-</head>
-<body>
-  <div class="layout">
-    <aside class="sidebar">
-      <div id="serverRail" class="server-rail"></div>
-    </aside>
-
-    <main class="content">
-      <header class="topbar">
-        <div class="brand">${safeName}</div>
-        <div id="centerTitle" class="center-title">User Dashboard</div>
-        <div id="userMeta" class="pill topbar-right">Loading...</div>
-      </header>
-
-      <div class="container">
-        <div class="main-tabs">
-          <button id="tabHome" class="main-tab active cursor-pointer">Home</button>
-          <button id="tabPlugins" class="main-tab cursor-pointer">Plugins</button>
-        </div>
-
-        <section id="homeArea">
-          <div class="section-title">Home</div>
-          <section id="homeCategories" class="home-categories"></section>
-          <section id="homeSections" class="home-sections"></section>
-
-          <section id="overviewArea">
-            <div class="section-title">Dashboard Stats</div>
-            <section id="overviewCards" class="grid cards"></section>
-          </section>
-        </section>
-
-        <section id="pluginsArea" style="display:none;">
-          <div class="section-title">Plugins</div>
-          <section id="plugins" class="grid"></section>
-        </section>
-      </div>
-    </main>
-  </div>
-
-  <script>
+  return renderDefaultLayoutDocument({
+    safeName,
+    css: defaultAppCss,
+    customCss: setupDesign?.customCss,
+    body,
+    script: `
     const dashboardConfig = ${scriptData};
     const state = {
       session: null,
@@ -1293,7 +1253,6 @@ export function renderDashboardHtml(name: string, basePath: string, setupDesign?
       el.userMeta.textContent = "Load failed";
       console.error(error);
     });
-  </script>
-</body>
-</html>`;
+`,
+  });
 }
