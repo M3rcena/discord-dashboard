@@ -1,19 +1,13 @@
 import type { Express } from "express";
 import type { Client } from "discord.js";
-import { createDashboard, createDashboardDesigner } from "../../src";
+import { DiscordDashboard, DashboardDesigner } from "../../src";
 import type { BotConfig } from "./types";
 import type { DemoStateStore } from "./state-store";
 
-export function createBotDashboard(options: {
-  app: Express;
-  config: BotConfig;
-  store: DemoStateStore;
-  client: Client;
-  commandCount: number;
-}) {
+export function createBotDashboard(options: { app: Express; config: BotConfig; store: DemoStateStore; client: Client; commandCount: number }) {
   const { app, config, store, client, commandCount } = options;
 
-  const flexibleDesigner = createDashboardDesigner({
+  const flexibleDesigner = new DashboardDesigner({
     app,
     basePath: config.dashboardBasePath,
     dashboardName: config.dashboardName,
@@ -21,7 +15,7 @@ export function createBotDashboard(options: {
     clientId: config.clientId,
     clientSecret: config.clientSecret,
     redirectUri: config.redirectUri,
-    sessionSecret: config.sessionSecret
+    sessionSecret: config.sessionSecret,
   })
     .setupPage({
       id: "profile-flex",
@@ -34,24 +28,24 @@ export function createBotDashboard(options: {
       fields: [
         { id: "flexBio", label: "Bio", type: "textarea", value: "" },
         { id: "flexPetName", label: "Favorite Pet", type: "text", value: "Luna" },
-        { id: "flexPetNotifications", label: "Pet Notifications", type: "boolean", value: true }
-      ]
+        { id: "flexPetNotifications", label: "Pet Notifications", type: "boolean", value: true },
+      ],
     })
-      .setupPage({
-        id: "guild-flex",
-        title: "Guild (Flex API)",
-        label: "Guild Flex",
-        categoryId: "guild-flex",
-        scope: "guild",
-        width: 50,
-        description: "Guild page using setupPage + onload + onsave.",
-        fields: [
-          { id: "flexGuildPrefix", label: "Prefix", type: "text", value: "!" },
-          { id: "flexGuildLog", label: "Log Channel ID", type: "text", value: "" },
-          { id: "flexGuildWelcome", label: "Welcome Channel ID", type: "text", value: "" },
-          { id: "flexGuildModeration", label: "Moderation Enabled", type: "boolean", value: true }
-        ]
-      })
+    .setupPage({
+      id: "guild-flex",
+      title: "Guild (Flex API)",
+      label: "Guild Flex",
+      categoryId: "guild-flex",
+      scope: "guild",
+      width: 50,
+      description: "Guild page using setupPage + onload + onsave.",
+      fields: [
+        { id: "flexGuildPrefix", label: "Prefix", type: "text", value: "!" },
+        { id: "flexGuildLog", label: "Log Channel ID", type: "text", value: "" },
+        { id: "flexGuildWelcome", label: "Welcome Channel ID", type: "text", value: "" },
+        { id: "flexGuildModeration", label: "Moderation Enabled", type: "boolean", value: true },
+      ],
+    })
     .onLoad("profile-flex", async (context, section) => {
       const userState = await store.getUserState(context.user.id);
       return {
@@ -60,8 +54,8 @@ export function createBotDashboard(options: {
         fields: [
           { id: "flexBio", label: "Bio", type: "textarea", value: userState.profileBio },
           { id: "flexPetName", label: "Favorite Pet", type: "text", value: userState.favoritePetName },
-          { id: "flexPetNotifications", label: "Pet Notifications", type: "boolean", value: userState.petNotifications }
-        ]
+          { id: "flexPetNotifications", label: "Pet Notifications", type: "boolean", value: userState.petNotifications },
+        ],
       };
     })
     .onSave("profile-flex", async (context, payload) => {
@@ -70,7 +64,7 @@ export function createBotDashboard(options: {
           profileBio: "",
           petsEnabled: true,
           favoritePetName: "Luna",
-          petNotifications: true
+          petNotifications: true,
         };
 
         state.users[context.user.id] = {
@@ -78,7 +72,7 @@ export function createBotDashboard(options: {
           profileBio: String(payload.values.flexBio ?? ""),
           favoritePetName: String(payload.values.flexPetName ?? "Luna"),
           petNotifications: Boolean(payload.values.flexPetNotifications),
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
         };
       });
 
@@ -88,7 +82,7 @@ export function createBotDashboard(options: {
       if (!context.selectedGuildId) {
         return {
           ...section,
-          description: "Select a guild from the left rail to use this page."
+          description: "Select a guild from the left rail to use this page.",
         };
       }
 
@@ -100,8 +94,8 @@ export function createBotDashboard(options: {
           { id: "flexGuildPrefix", label: "Prefix", type: "text", value: guildState.prefix },
           { id: "flexGuildLog", label: "Log Channel ID", type: "text", value: guildState.logChannelId },
           { id: "flexGuildWelcome", label: "Welcome Channel ID", type: "text", value: guildState.welcomeChannelId },
-          { id: "flexGuildModeration", label: "Moderation Enabled", type: "boolean", value: guildState.moderationEnabled }
-        ]
+          { id: "flexGuildModeration", label: "Moderation Enabled", type: "boolean", value: guildState.moderationEnabled },
+        ],
       };
     })
     .onsave("guild-flex", async (context, payload) => {
@@ -116,7 +110,7 @@ export function createBotDashboard(options: {
           logChannelId: "",
           welcomeChannelId: "",
           pollButtons: ["✅ Yes", "❌ No"],
-          pollMessage: "What should we do for the next event?"
+          pollMessage: "What should we do for the next event?",
         };
 
         state.guilds[context.selectedGuildId!] = {
@@ -125,7 +119,7 @@ export function createBotDashboard(options: {
           logChannelId: String(payload.values.flexGuildLog ?? current.logChannelId),
           welcomeChannelId: String(payload.values.flexGuildWelcome ?? current.welcomeChannelId),
           moderationEnabled: Boolean(payload.values.flexGuildModeration),
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
         };
       });
 
@@ -147,17 +141,66 @@ export function createBotDashboard(options: {
     return [...map.values()];
   };
 
-  return createDashboard({
+  return new DiscordDashboard({
     app,
     basePath: config.dashboardBasePath,
     dashboardName: config.dashboardName,
     uiTemplate: "compact",
     setupDesign: {
-      primary: "#4f46e5",
-      rail: "#171923",
-      panel: "#2b2f3a",
-      panel2: "#353b49",
-      border: "rgba(255, 255, 255, 0.14)"
+      primary: "#6366f1",
+      rail: "#0f172a",
+      panel: "rgba(30, 41, 59, 0.7)", // Semi-transparent for glass effect
+      panel2: "rgba(51, 65, 85, 0.8)",
+      border: "rgba(255, 255, 255, 0.08)",
+      customCss: `
+          /* 1. Force a bright gradient background */
+          body {
+            background: linear-gradient(45deg, #1a0033 0%, #4b0082 100%) !important;
+            background-attachment: fixed !important;
+          }
+  
+          /* 2. Give every panel a glowing pink border and rounded corners */
+          .panel, .container {
+            border: 2px solid #ff007f !important;
+            box-shadow: 0 0 20px rgba(255, 0, 127, 0.4) !important;
+            border-radius: 20px !important;
+            background: rgba(20, 0, 20, 0.8) !important;
+            backdrop-filter: blur(10px);
+          }
+  
+          /* 3. Make the server rail stand out with a neon line */
+          .sidebar {
+            border-right: 3px solid #ff007f !important;
+            background: #110011 !important;
+          }
+  
+          /* 4. Make all buttons have a "glow" effect */
+          button {
+            border: 1px solid #ff007f !important;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 2px;
+          }
+  
+          button.primary {
+            background: #ff007f !important;
+            box-shadow: 0 0 15px #ff007f !important;
+            color: white !important;
+          }
+  
+          /* 5. Change the text color of titles to neon pink */
+          .section-title, .brand, .center-title {
+            color: #ff007f !important;
+            text-shadow: 0 0 10px #ff007f;
+            font-size: 1.5rem !important;
+          }
+  
+          /* 6. Make labels bright cyan for contrast */
+          label {
+            color: #00ffff !important;
+            font-weight: bold !important;
+          }
+        `,
     },
     botToken: config.botToken,
     clientId: config.clientId,
@@ -174,26 +217,26 @@ export function createBotDashboard(options: {
           id: "who",
           title: "Authenticated As",
           value: context.user.global_name || context.user.username,
-          subtitle: context.user.id
+          subtitle: context.user.id,
         },
         {
           id: "commands",
           title: "Slash Commands",
           value: commandCount,
-          subtitle: config.devGuildId ? "Guild scoped registration" : "Global registration"
+          subtitle: config.devGuildId ? "Guild scoped registration" : "Global registration",
         },
         {
           id: "events",
           title: "Tracked Guilds",
           value: Object.keys(state.guilds).length,
-          subtitle: "Persisted in live JSON state"
+          subtitle: "Persisted in live JSON state",
         },
         {
           id: "saves",
           title: "JSON Saves",
           value: state.meta.saveCount,
-          subtitle: state.meta.lastAction
-        }
+          subtitle: state.meta.lastAction,
+        },
       ];
     },
     home: {
@@ -201,20 +244,10 @@ export function createBotDashboard(options: {
         const flexibleCategories = flexibleHome?.getCategories ? await flexibleHome.getCategories(context) : [];
 
         if (context.selectedGuildId) {
-          return mergeCategories([
-            { id: "overview", label: "Overview", scope: "guild" },
-            { id: "guild", label: "Guild Config", scope: "guild" },
-            { id: "setup", label: "Setup", scope: "setup" },
-            ...flexibleCategories
-          ]);
+          return mergeCategories([{ id: "overview", label: "Overview", scope: "guild" }, { id: "guild", label: "Guild Config", scope: "guild" }, { id: "setup", label: "Setup", scope: "setup" }, ...flexibleCategories]);
         }
 
-        return mergeCategories([
-          { id: "overview", label: "Overview", scope: "user" },
-          { id: "profile", label: "Profile", scope: "user" },
-          { id: "setup", label: "Setup", scope: "setup" },
-          ...flexibleCategories
-        ]);
+        return mergeCategories([{ id: "overview", label: "Overview", scope: "user" }, { id: "profile", label: "Profile", scope: "user" }, { id: "setup", label: "Setup", scope: "setup" }, ...flexibleCategories]);
       },
       getSections: async (context) => {
         const flexibleSections = flexibleHome?.getSections ? await flexibleHome.getSections(context) : [];
@@ -233,8 +266,8 @@ export function createBotDashboard(options: {
             { id: "file", label: "State File", type: "text" as const, value: store.filePath, readOnly: true },
             { id: "lastAction", label: "Last Action", type: "text" as const, value: state.meta.lastAction, readOnly: true },
             { id: "lastUpdatedBy", label: "Last Updated By", type: "text" as const, value: state.meta.lastUpdatedBy, readOnly: true },
-            { id: "lastUpdatedAt", label: "Last Updated At", type: "text" as const, value: state.meta.lastUpdatedAt, readOnly: true }
-          ]
+            { id: "lastUpdatedAt", label: "Last Updated At", type: "text" as const, value: state.meta.lastUpdatedAt, readOnly: true },
+          ],
         };
 
         if (!context.selectedGuildId) {
@@ -250,8 +283,8 @@ export function createBotDashboard(options: {
                 { id: "bioLive", label: "Profile Bio", type: "textarea", value: userState.profileBio || "(empty)", readOnly: true },
                 { id: "petsLive", label: "Pets Enabled", type: "boolean", value: userState.petsEnabled, readOnly: true },
                 { id: "petNameLive", label: "Favorite Pet", type: "text", value: userState.favoritePetName, readOnly: true },
-                { id: "petNotifyLive", label: "Pet Notifications", type: "boolean", value: userState.petNotifications, readOnly: true }
-              ]
+                { id: "petNotifyLive", label: "Pet Notifications", type: "boolean", value: userState.petNotifications, readOnly: true },
+              ],
             },
             {
               id: "user-profile",
@@ -264,12 +297,12 @@ export function createBotDashboard(options: {
                 { id: "profileBio", label: "Profile Bio", type: "textarea", value: userState.profileBio },
                 { id: "petsEnabled", label: "Enable Pets", type: "boolean", value: userState.petsEnabled },
                 { id: "favoritePetName", label: "Favorite Pet", type: "text", value: userState.favoritePetName },
-                { id: "petNotifications", label: "Pet Notifications", type: "boolean", value: userState.petNotifications }
+                { id: "petNotifications", label: "Pet Notifications", type: "boolean", value: userState.petNotifications },
               ],
-              actions: [{ id: "saveUserProfile", label: "Save Profile", variant: "primary" }]
+              actions: [{ id: "saveUserProfile", label: "Save Profile", variant: "primary" }],
             },
             setupSection,
-            ...flexibleSections
+            ...flexibleSections,
           ];
         }
 
@@ -285,8 +318,8 @@ export function createBotDashboard(options: {
               { id: "prefixView", label: "Prefix", type: "text", value: guildState?.prefix ?? "!", readOnly: true },
               { id: "modView", label: "Moderation", type: "boolean", value: guildState?.moderationEnabled ?? true, readOnly: true },
               { id: "eventView", label: "Last Event", type: "text", value: guildState?.lastEvent ?? "none", readOnly: true },
-              { id: "cmdView", label: "Last Command At", type: "text", value: guildState?.lastCommandAt ?? "never", readOnly: true }
-            ]
+              { id: "cmdView", label: "Last Command At", type: "text", value: guildState?.lastCommandAt ?? "never", readOnly: true },
+            ],
           },
           {
             id: "guild-settings",
@@ -301,12 +334,12 @@ export function createBotDashboard(options: {
               { id: "logChannelId", label: "Log Channel ID", type: "text", value: guildState?.logChannelId ?? "" },
               { id: "welcomeChannelId", label: "Welcome Channel ID", type: "text", value: guildState?.welcomeChannelId ?? "" },
               { id: "pollMessage", label: "Poll Message", type: "textarea", value: guildState?.pollMessage ?? "" },
-              { id: "pollButtons", label: "Poll Buttons", type: "string-list", value: guildState?.pollButtons ?? ["✅ Yes", "❌ No"] }
+              { id: "pollButtons", label: "Poll Buttons", type: "string-list", value: guildState?.pollButtons ?? ["✅ Yes", "❌ No"] },
             ],
-            actions: [{ id: "saveGuildSettings", label: "Save Guild Settings", variant: "primary" }]
+            actions: [{ id: "saveGuildSettings", label: "Save Guild Settings", variant: "primary" }],
           },
           setupSection,
-          ...flexibleSections
+          ...flexibleSections,
         ];
       },
       actions: {
@@ -317,7 +350,7 @@ export function createBotDashboard(options: {
               profileBio: "",
               petsEnabled: true,
               favoritePetName: "Luna",
-              petNotifications: true
+              petNotifications: true,
             };
 
             state.users[context.user.id] = {
@@ -326,7 +359,7 @@ export function createBotDashboard(options: {
               petsEnabled: Boolean(payload.values.petsEnabled),
               favoritePetName: String(payload.values.favoritePetName ?? "Luna"),
               petNotifications: Boolean(payload.values.petNotifications),
-              updatedAt: new Date().toISOString()
+              updatedAt: new Date().toISOString(),
             };
           });
 
@@ -344,12 +377,10 @@ export function createBotDashboard(options: {
               logChannelId: "",
               welcomeChannelId: "",
               pollButtons: ["✅ Yes", "❌ No"],
-              pollMessage: "What should we do for the next event?"
+              pollMessage: "What should we do for the next event?",
             };
 
-            const buttons = Array.isArray(payload.values.pollButtons)
-              ? payload.values.pollButtons.map((item) => String(item)).filter((item) => item.length > 0)
-              : current.pollButtons;
+            const buttons = Array.isArray(payload.values.pollButtons) ? payload.values.pollButtons.map((item) => String(item)).filter((item) => item.length > 0) : current.pollButtons;
 
             state.guilds[context.selectedGuildId!] = {
               ...current,
@@ -359,13 +390,13 @@ export function createBotDashboard(options: {
               welcomeChannelId: String(payload.values.welcomeChannelId ?? ""),
               pollMessage: String(payload.values.pollMessage ?? current.pollMessage),
               pollButtons: buttons.length > 0 ? buttons : ["✅ Yes", "❌ No"],
-              updatedAt: new Date().toISOString()
+              updatedAt: new Date().toISOString(),
             };
           });
 
           return { ok: true, message: "Guild settings saved to JSON", refresh: true };
-        }
-      }
+        },
+      },
     },
     plugins: [
       {
@@ -384,16 +415,16 @@ export function createBotDashboard(options: {
                 { label: "Guild Cache", value: client.guilds.cache.size },
                 { label: "Node Uptime", value: `${Math.floor(process.uptime())}s` },
                 { label: "Memory RSS", value: `${Math.round(process.memoryUsage().rss / 1024 / 1024)} MB` },
-                { label: "Saved Actions", value: state.meta.saveCount }
+                { label: "Saved Actions", value: state.meta.saveCount },
               ],
-              actions: [{ id: "refreshRuntime", label: "Refresh", variant: "primary" }]
-            }
+              actions: [{ id: "refreshRuntime", label: "Refresh", variant: "primary" }],
+            },
           ];
         },
         actions: {
-          refreshRuntime: async () => ({ ok: true, message: "Runtime data refreshed", refresh: true })
-        }
-      }
-    ]
+          refreshRuntime: async () => ({ ok: true, message: "Runtime data refreshed", refresh: true }),
+        },
+      },
+    ],
   });
 }

@@ -1,4 +1,4 @@
-import type { DashboardDesignConfig } from "./types";
+import type { DashboardDesignConfig } from "../Types";
 
 const appCss = `
 :root {
@@ -53,7 +53,6 @@ body {
   font-weight: 700;
   display: grid;
   place-items: center;
-  cursor: pointer;
   transition: border-radius .15s ease, background .15s ease, transform .15s ease;
 }
 .server-item:hover { border-radius: 16px; background: #404249; }
@@ -168,7 +167,6 @@ button {
   color: var(--text);
   border-radius: 8px;
   padding: 8px 12px;
-  cursor: pointer;
 }
 button.primary {
   background: var(--primary);
@@ -324,7 +322,6 @@ button.danger { background: #3a1e27; border-color: rgba(255,107,107,.45); }
 .drag-handle {
   color: var(--muted);
   user-select: none;
-  cursor: grab;
   font-size: 0.9rem;
 }
 .list-input {
@@ -338,20 +335,18 @@ button.danger { background: #3a1e27; border-color: rgba(255,107,107,.45); }
   justify-self: start;
 }
 .empty { color: var(--muted); font-size: 0.9rem; }
+.cursor-pointer { cursor: pointer; }
 `;
 
 function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 
 export function renderDashboardHtml(name: string, basePath: string, setupDesign?: DashboardDesignConfig): string {
   const safeName = escapeHtml(name);
   const scriptData = JSON.stringify({ basePath, setupDesign: setupDesign ?? {} });
+
+  const customCssBlock = setupDesign?.customCss ? `\n  <style>${setupDesign.customCss}</style>` : "";
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -359,7 +354,7 @@ export function renderDashboardHtml(name: string, basePath: string, setupDesign?
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${safeName}</title>
-  <style>${appCss}</style>
+  <style>${appCss}</style>${customCssBlock}
 </head>
 <body>
   <div class="layout">
@@ -376,8 +371,8 @@ export function renderDashboardHtml(name: string, basePath: string, setupDesign?
 
       <div class="container">
         <div class="main-tabs">
-          <button id="tabHome" class="main-tab active">Home</button>
-          <button id="tabPlugins" class="main-tab">Plugins</button>
+          <button id="tabHome" class="main-tab active cursor-pointer">Home</button>
+          <button id="tabPlugins" class="main-tab cursor-pointer">Plugins</button>
         </div>
 
         <section id="homeArea">
@@ -488,7 +483,9 @@ export function renderDashboardHtml(name: string, basePath: string, setupDesign?
     const makeButton = (action, pluginId, panelId, panelElement) => {
       const button = document.createElement("button");
       button.textContent = action.label;
-      button.className = action.variant === "primary" ? "primary" : action.variant === "danger" ? "danger" : "";
+      const variantClass = action.variant === "primary" ? "primary" : action.variant === "danger" ? "danger" : "";
+      button.className = [variantClass, "cursor-pointer"].filter(Boolean).join(" ");
+      
       button.addEventListener("click", async () => {
         button.disabled = true;
         try {
@@ -593,7 +590,7 @@ export function renderDashboardHtml(name: string, basePath: string, setupDesign?
       el.serverRail.innerHTML = "";
       items.forEach((item) => {
         const button = document.createElement("button");
-        button.className = "server-item" + (item.id === state.selectedGuildId ? " active" : "");
+        button.className = "server-item cursor-pointer" + (item.id === state.selectedGuildId ? " active" : "");
         button.title = item.id && !item.botInGuild ? (item.name + " • Invite bot") : item.name;
 
         const activeIndicator = document.createElement("span");
@@ -630,8 +627,8 @@ export function renderDashboardHtml(name: string, basePath: string, setupDesign?
       const homeActive = state.activeMainTab === "home";
       el.homeArea.style.display = homeActive ? "block" : "none";
       el.pluginsArea.style.display = homeActive ? "none" : "block";
-      el.tabHome.className = "main-tab" + (homeActive ? " active" : "");
-      el.tabPlugins.className = "main-tab" + (!homeActive ? " active" : "");
+      el.tabHome.className = "main-tab cursor-pointer" + (homeActive ? " active" : "");
+      el.tabPlugins.className = "main-tab cursor-pointer" + (!homeActive ? " active" : "");
     };
 
     const updateContextLabel = () => {
@@ -653,7 +650,7 @@ export function renderDashboardHtml(name: string, basePath: string, setupDesign?
       el.homeCategories.innerHTML = "";
       state.homeCategories.forEach((category) => {
         const button = document.createElement("button");
-        button.className = "home-category-btn" + (state.selectedHomeCategoryId === category.id ? " active" : "");
+        button.className = "home-category-btn cursor-pointer" + (state.selectedHomeCategoryId === category.id ? " active" : "");
         button.textContent = category.label;
         button.title = category.description || category.label;
         button.addEventListener("click", async () => {
@@ -714,7 +711,7 @@ export function renderDashboardHtml(name: string, basePath: string, setupDesign?
       itemsWrap.className = "list-items";
       const addButton = document.createElement("button");
       addButton.type = "button";
-      addButton.className = "list-add";
+      addButton.className = "list-add cursor-pointer";
       addButton.textContent = "Add Button";
 
       const normalizeValues = () => {
@@ -730,7 +727,7 @@ export function renderDashboardHtml(name: string, basePath: string, setupDesign?
         row.draggable = true;
 
         const handle = document.createElement("span");
-        handle.className = "drag-handle";
+        handle.className = "drag-handle cursor-pointer";
         handle.textContent = "⋮⋮";
 
         const textInput = document.createElement("input");
@@ -742,6 +739,7 @@ export function renderDashboardHtml(name: string, basePath: string, setupDesign?
 
         const removeButton = document.createElement("button");
         removeButton.type = "button";
+        removeButton.className = "cursor-pointer";
         removeButton.textContent = "×";
         removeButton.addEventListener("click", () => {
           row.remove();
@@ -819,7 +817,7 @@ export function renderDashboardHtml(name: string, basePath: string, setupDesign?
       items.forEach((item) => {
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "lookup-item";
+        btn.className = "lookup-item cursor-pointer";
         btn.textContent = labelResolver(item);
         btn.addEventListener("click", () => {
           onSelect(item);
@@ -975,7 +973,7 @@ export function renderDashboardHtml(name: string, basePath: string, setupDesign?
               input.value = field.value == null ? "" : String(field.value);
             } else if (field.type === "select") {
               input = document.createElement("select");
-              input.className = "home-select";
+              input.className = "home-select cursor-pointer";
               (field.options || []).forEach((option) => {
                 const optionEl = document.createElement("option");
                 optionEl.value = option.value;
@@ -990,7 +988,7 @@ export function renderDashboardHtml(name: string, basePath: string, setupDesign?
               row.className = "home-field-row";
               input = document.createElement("input");
               input.type = "checkbox";
-              input.className = "home-checkbox";
+              input.className = "home-checkbox cursor-pointer";
               input.checked = Boolean(field.value);
               const stateText = document.createElement("span");
               stateText.textContent = input.checked ? "Enabled" : "Disabled";
@@ -1045,7 +1043,9 @@ export function renderDashboardHtml(name: string, basePath: string, setupDesign?
           section.actions.forEach((action) => {
             const button = document.createElement("button");
             button.textContent = action.label;
-            button.className = action.variant === "primary" ? "primary" : action.variant === "danger" ? "danger" : "";
+            const variantClass = action.variant === "primary" ? "primary" : action.variant === "danger" ? "danger" : "";
+            button.className = [variantClass, "cursor-pointer"].filter(Boolean).join(" ");
+            
             button.addEventListener("click", async () => {
               button.disabled = true;
               try {
@@ -1159,7 +1159,7 @@ export function renderDashboardHtml(name: string, basePath: string, setupDesign?
                 input.value = field.value == null ? "" : String(field.value);
               } else if (field.type === "select") {
                 input = document.createElement("select");
-                input.className = "home-select";
+                input.className = "home-select cursor-pointer";
                 (field.options || []).forEach((option) => {
                   const optionEl = document.createElement("option");
                   optionEl.value = option.value;
@@ -1174,7 +1174,7 @@ export function renderDashboardHtml(name: string, basePath: string, setupDesign?
                 row.className = "home-field-row";
                 input = document.createElement("input");
                 input.type = "checkbox";
-                input.className = "home-checkbox";
+                input.className = "home-checkbox cursor-pointer";
                 input.checked = Boolean(field.value);
                 const stateText = document.createElement("span");
                 stateText.textContent = input.checked ? "Enabled" : "Disabled";

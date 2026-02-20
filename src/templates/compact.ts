@@ -1,13 +1,8 @@
-import { renderDashboardHtml } from "../templates";
-import type { DashboardTemplateRenderer } from "../types";
+import type { DashboardTemplateRenderer } from "../Types";
+import { renderDashboardHtml } from "./templates";
 
 function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 
 function extractDashboardScript(html: string): string {
@@ -94,7 +89,6 @@ body {
   background: var(--panel);
   color: #fff;
   font-weight: 700;
-  cursor: pointer;
   transition: transform .15s ease, background .15s ease;
 }
 .server-item:hover { transform: translateY(-1px); background: #323b5f; }
@@ -145,7 +139,6 @@ button {
   color: var(--text);
   border-radius: 8px;
   padding: 7px 10px;
-  cursor: pointer;
 }
 button.primary { background: var(--primary); border: none; }
 button.danger { background: #4a2230; border-color: rgba(255,111,145,.45); }
@@ -236,23 +229,22 @@ button.danger { background: #4a2230; border-color: rgba(255,111,145,.45); }
   background: var(--panel);
 }
 .list-item.dragging { opacity: .6; }
-.drag-handle { color: var(--muted); user-select: none; cursor: grab; font-size: .9rem; }
+.drag-handle { color: var(--muted); user-select: none; font-size: .9rem; }
 .list-input { width: 100%; border: none; outline: none; background: transparent; color: var(--text); }
 .list-add { justify-self: start; }
 .empty { color: var(--muted); font-size: .9rem; }
+.cursor-pointer { cursor: pointer; }
 @media (max-width: 980px) {
   .layout { grid-template-columns: 70px 1fr; }
   .home-width-50, .home-width-33, .home-width-20 { flex-basis: 100%; max-width: 100%; }
 }
 `;
 
-export const compactDashboardTemplateRenderer: DashboardTemplateRenderer = ({
-  dashboardName,
-  basePath,
-  setupDesign
-}) => {
+export const compactDashboardTemplateRenderer: DashboardTemplateRenderer = ({ dashboardName, basePath, setupDesign }) => {
   const script = extractDashboardScript(renderDashboardHtml(dashboardName, basePath, setupDesign));
   const safeName = escapeHtml(dashboardName);
+
+  const customCssBlock = setupDesign?.customCss ? `\n  <style>${setupDesign.customCss}</style>` : "";
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -260,7 +252,7 @@ export const compactDashboardTemplateRenderer: DashboardTemplateRenderer = ({
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${safeName}</title>
-  <style>${compactCss}</style>
+  <style>${compactCss}</style>${customCssBlock}
 </head>
 <body>
   <div class="shell">
@@ -278,8 +270,8 @@ export const compactDashboardTemplateRenderer: DashboardTemplateRenderer = ({
       <main class="content">
         <div class="container">
           <div class="main-tabs">
-            <button id="tabHome" class="main-tab active">Home</button>
-            <button id="tabPlugins" class="main-tab">Plugins</button>
+            <button id="tabHome" class="main-tab active cursor-pointer">Home</button>
+            <button id="tabPlugins" class="main-tab cursor-pointer">Plugins</button>
           </div>
 
           <section id="homeArea">

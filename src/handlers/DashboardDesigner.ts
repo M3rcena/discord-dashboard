@@ -1,26 +1,9 @@
-import type {
-  DashboardHomeBuilder,
-  DashboardContext,
-  DashboardOptions,
-  DashboardScope,
-  DashboardTemplateRenderer,
-  HomeActionPayload,
-  HomeCategory,
-  HomeSection,
-  HomeSectionAction,
-  HomeSectionField,
-  PluginActionResult
-} from "./types";
+import type { DashboardContext, DashboardHomeBuilder, DashboardOptions, DashboardScope, DashboardTemplateRenderer, HomeActionPayload, HomeCategory, HomeSection, HomeSectionAction, HomeSectionField, PluginActionResult } from "../Types";
+import { DiscordDashboard } from "../index";
 
-type HomeActionHandler = (
-  context: DashboardContext,
-  payload: HomeActionPayload
-) => Promise<PluginActionResult> | PluginActionResult;
+type HomeActionHandler = (context: DashboardContext, payload: HomeActionPayload) => Promise<PluginActionResult> | PluginActionResult;
 
-type HomeLoadHandler = (
-  context: DashboardContext,
-  section: HomeSection
-) => Promise<Partial<HomeSection> | HomeSection | void> | Partial<HomeSection> | HomeSection | void;
+type HomeLoadHandler = (context: DashboardContext, section: HomeSection) => Promise<Partial<HomeSection> | HomeSection | void> | Partial<HomeSection> | HomeSection | void;
 
 interface DesignerPageDefinition {
   pageId: string;
@@ -34,17 +17,10 @@ class CategoryBuilder {
   constructor(
     private readonly scope: DashboardScope,
     private readonly categoryId: string,
-    private readonly categoryLabel: string
+    private readonly categoryLabel: string,
   ) {}
 
-  section(input: {
-    id: string;
-    title: string;
-    description?: string;
-    width?: 100 | 50 | 33 | 20;
-    fields?: HomeSectionField[];
-    actions?: HomeSectionAction[];
-  }): this {
+  section(input: { id: string; title: string; description?: string; width?: 100 | 50 | 33 | 20; fields?: HomeSectionField[]; actions?: HomeSectionAction[] }): this {
     this.sections.push({
       id: input.id,
       title: input.title,
@@ -53,18 +29,13 @@ class CategoryBuilder {
       fields: input.fields ?? [],
       actions: input.actions ?? [],
       scope: this.scope,
-      categoryId: this.categoryId
+      categoryId: this.categoryId,
     });
-
     return this;
   }
 
   buildCategory(): HomeCategory {
-    return {
-      id: this.categoryId,
-      label: this.categoryLabel,
-      scope: this.scope
-    };
+    return { id: this.categoryId, label: this.categoryLabel, scope: this.scope };
   }
 
   buildSections(): HomeSection[] {
@@ -84,20 +55,8 @@ export class DashboardDesigner {
     this.partialOptions = { ...baseOptions };
   }
 
-  setup(input: {
-    ownerIds?: string[];
-    botInvitePermissions?: string;
-    botInviteScopes?: string[];
-    dashboardName?: string;
-    basePath?: string;
-    uiTemplate?: string;
-  }): this {
-    if (input.ownerIds) this.partialOptions.ownerIds = input.ownerIds;
-    if (input.botInvitePermissions) this.partialOptions.botInvitePermissions = input.botInvitePermissions;
-    if (input.botInviteScopes) this.partialOptions.botInviteScopes = input.botInviteScopes;
-    if (input.dashboardName) this.partialOptions.dashboardName = input.dashboardName;
-    if (input.basePath) this.partialOptions.basePath = input.basePath;
-    if (input.uiTemplate) this.partialOptions.uiTemplate = input.uiTemplate;
+  setup(input: { ownerIds?: string[]; botInvitePermissions?: string; botInviteScopes?: string[]; dashboardName?: string; basePath?: string; uiTemplate?: string }): this {
+    Object.assign(this.partialOptions, input);
     return this;
   }
 
@@ -109,32 +68,16 @@ export class DashboardDesigner {
   addTemplate(templateId: string, renderer: DashboardTemplateRenderer): this {
     this.partialOptions.uiTemplates = {
       ...(this.partialOptions.uiTemplates ?? {}),
-      [templateId]: renderer
+      [templateId]: renderer,
     };
-
     return this;
   }
 
-  setupDesign(input: {
-    bg?: string;
-    rail?: string;
-    contentBg?: string;
-    panel?: string;
-    panel2?: string;
-    text?: string;
-    muted?: string;
-    primary?: string;
-    success?: string;
-    warning?: string;
-    danger?: string;
-    info?: string;
-    border?: string;
-  }): this {
+  setupDesign(input: { bg?: string; rail?: string; contentBg?: string; panel?: string; panel2?: string; text?: string; muted?: string; primary?: string; success?: string; warning?: string; danger?: string; info?: string; border?: string }): this {
     this.partialOptions.setupDesign = {
       ...(this.partialOptions.setupDesign ?? {}),
-      ...input
+      ...input,
     };
-
     return this;
   }
 
@@ -159,27 +102,13 @@ export class DashboardDesigner {
     return this;
   }
 
-  setupPage(input: {
-    id: string;
-    title: string;
-    label?: string;
-    scope?: DashboardScope;
-    categoryId?: string;
-    description?: string;
-    width?: 100 | 50 | 33 | 20;
-    fields?: HomeSectionField[];
-    actions?: HomeSectionAction[];
-  }): this {
+  setupPage(input: { id: string; title: string; label?: string; scope?: DashboardScope; categoryId?: string; description?: string; width?: 100 | 50 | 33 | 20; fields?: HomeSectionField[]; actions?: HomeSectionAction[] }): this {
     const scope = input.scope ?? "user";
     const categoryId = input.categoryId ?? input.id;
 
     this.pages.push({
       pageId: input.id,
-      category: {
-        id: categoryId,
-        label: input.label ?? input.title,
-        scope
-      },
+      category: { id: categoryId, label: input.label ?? input.title, scope },
       section: {
         id: input.id,
         title: input.title,
@@ -188,15 +117,9 @@ export class DashboardDesigner {
         scope,
         categoryId,
         fields: input.fields ?? [],
-        actions: input.actions ?? []
-      }
+        actions: input.actions ?? [],
+      },
     });
-
-    return this;
-  }
-
-  onHomeAction(actionId: string, handler: HomeActionHandler): this {
-    this.homeActions[actionId] = handler;
     return this;
   }
 
@@ -204,7 +127,6 @@ export class DashboardDesigner {
     this.loadHandlers[pageId] = handler;
     return this;
   }
-
   onload(pageId: string, handler: HomeLoadHandler): this {
     return this.onLoad(pageId, handler);
   }
@@ -213,9 +135,21 @@ export class DashboardDesigner {
     this.saveHandlers[pageId] = handler;
     return this;
   }
-
   onsave(pageId: string, handler: HomeActionHandler): this {
     return this.onSave(pageId, handler);
+  }
+
+  onHomeAction(actionId: string, handler: HomeActionHandler): this {
+    this.homeActions[actionId] = handler;
+    return this;
+  }
+
+  customCss(cssString: string): this {
+    this.partialOptions.setupDesign = {
+      ...(this.partialOptions.setupDesign ?? {}),
+      customCss: cssString,
+    };
+    return this;
   }
 
   build(): DashboardOptions {
@@ -227,23 +161,16 @@ export class DashboardDesigner {
     const categoryMap = new Map<string, HomeCategory>();
     for (const category of [...staticCategories, ...pageCategories]) {
       const key = `${category.scope}:${category.id}`;
-      if (!categoryMap.has(key)) {
-        categoryMap.set(key, category);
-      }
+      if (!categoryMap.has(key)) categoryMap.set(key, category);
     }
 
     const categories = [...categoryMap.values()];
     const saveActionIds: Record<string, string> = {};
     for (const section of baseSections) {
-      if (this.saveHandlers[section.id]) {
-        saveActionIds[section.id] = `save:${section.id}`;
-      }
+      if (this.saveHandlers[section.id]) saveActionIds[section.id] = `save:${section.id}`;
     }
 
-    const resolvedActions: Record<string, HomeActionHandler> = {
-      ...this.homeActions
-    };
-
+    const resolvedActions: Record<string, HomeActionHandler> = { ...this.homeActions };
     for (const [sectionId, handler] of Object.entries(this.saveHandlers)) {
       resolvedActions[saveActionIds[sectionId]] = handler;
     }
@@ -257,16 +184,12 @@ export class DashboardDesigner {
           let section: HomeSection = {
             ...sourceSection,
             fields: sourceSection.fields ? [...sourceSection.fields] : [],
-            actions: sourceSection.actions ? [...sourceSection.actions] : []
+            actions: sourceSection.actions ? [...sourceSection.actions] : [],
           };
 
           const saveActionId = saveActionIds[section.id];
           if (saveActionId && !section.actions?.some((action) => action.id === saveActionId)) {
-            section.actions = [...(section.actions ?? []), {
-              id: saveActionId,
-              label: "Save",
-              variant: "primary"
-            }];
+            section.actions = [...(section.actions ?? []), { id: saveActionId, label: "Save", variant: "primary" }];
           }
 
           const loadHandler = this.loadHandlers[section.id];
@@ -277,26 +200,28 @@ export class DashboardDesigner {
                 ...section,
                 ...loaded,
                 fields: loaded.fields ?? section.fields,
-                actions: loaded.actions ?? section.actions
+                actions: loaded.actions ?? section.actions,
               };
             }
           }
-
           sections.push(section);
         }
-
         return sections;
       },
-      actions: resolvedActions as DashboardHomeBuilder["actions"]
+      actions: resolvedActions as DashboardHomeBuilder["actions"],
     };
 
     return {
       ...(this.partialOptions as DashboardOptions),
-      home
+      home,
     };
   }
-}
 
-export function createDashboardDesigner(baseOptions: Omit<DashboardOptions, "home">): DashboardDesigner {
-  return new DashboardDesigner(baseOptions);
+  /**
+   * Builds the configuration and immediately instantiates the Dashboard.
+   */
+  createDashboard(): DiscordDashboard {
+    const options = this.build();
+    return new DiscordDashboard(options);
+  }
 }

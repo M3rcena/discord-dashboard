@@ -1,8 +1,4 @@
-import { renderDashboardHtml } from "../templates";
-import type { DashboardTemplateRenderer } from "../types";
+import type { DashboardTemplateRenderer } from "../Types";
+import { renderDashboardHtml } from "./templates";
 
-export const defaultDashboardTemplateRenderer: DashboardTemplateRenderer = ({
-  dashboardName,
-  basePath,
-  setupDesign
-}) => renderDashboardHtml(dashboardName, basePath, setupDesign);
+export const defaultDashboardTemplateRenderer: DashboardTemplateRenderer = ({ dashboardName, basePath, setupDesign }) => renderDashboardHtml(dashboardName, basePath, setupDesign);

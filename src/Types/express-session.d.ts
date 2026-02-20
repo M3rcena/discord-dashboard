@@ -1,5 +1,5 @@
 import "express-session";
-import type { DashboardGuild, DashboardUser } from "./types";
+import type { DashboardGuild, DashboardUser } from "./discord";
 
 declare module "express-session" {
   interface SessionData {
