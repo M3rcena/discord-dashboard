@@ -18,6 +18,12 @@ Build a fully functional, beautiful web dashboard for your bot without writing a
 
 ---
 
+## 🎨 Templates
+
+Browse built-in templates and screenshot placeholders in [src/templates/templates.md](src/templates/templates.md).
+
+---
+
 ## 📦 Installation
 
 ```bash

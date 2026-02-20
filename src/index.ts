@@ -251,9 +251,10 @@ export class DiscordDashboard implements DashboardInstance {
   private async handleGuilds(req: Request, res: Response) {
     const context = this.createContext(req);
 
-    if (this.options.ownerIds && this.options.ownerIds.length > 0 && !this.options.ownerIds.includes(context.user.id)) {
-      return res.status(403).json({ message: "You are not allowed to access this dashboard." });
-    }
+    // TODO: add 2 type of function that the owner of the bot can use it to create some settings in the website that only he can use it 
+    // if (this.options.ownerIds && this.options.ownerIds.length > 0 && !this.options.ownerIds.includes(context.user.id)) {
+    //   return res.status(403).json({ message: "You are not allowed to access this dashboard." });
+    // }
 
     let manageableGuilds = context.guilds.filter((guild) => guild.owner || canManageGuild(guild.permissions));
 

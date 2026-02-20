@@ -145,63 +145,63 @@ export function createBotDashboard(options: { app: Express; config: BotConfig; s
     app,
     basePath: config.dashboardBasePath,
     dashboardName: config.dashboardName,
-    uiTemplate: "compact",
-    setupDesign: {
-      primary: "#6366f1",
-      rail: "#0f172a",
-      panel: "rgba(30, 41, 59, 0.7)", // Semi-transparent for glass effect
-      panel2: "rgba(51, 65, 85, 0.8)",
-      border: "rgba(255, 255, 255, 0.08)",
-      customCss: `
-          /* 1. Force a bright gradient background */
-          body {
-            background: linear-gradient(45deg, #1a0033 0%, #4b0082 100%) !important;
-            background-attachment: fixed !important;
-          }
+    uiTemplate: "shadcn-magic",
+    // setupDesign: {
+    //   primary: "#6366f1",
+    //   rail: "#0f172a",
+    //   panel: "rgba(30, 41, 59, 0.7)", // Semi-transparent for glass effect
+    //   panel2: "rgba(51, 65, 85, 0.8)",
+    //   border: "rgba(255, 255, 255, 0.08)",
+    //   customCss: `
+    //       /* 1. Force a bright gradient background */
+    //       body {
+    //         background: linear-gradient(45deg, #1a0033 0%, #4b0082 100%) !important;
+    //         background-attachment: fixed !important;
+    //       }
   
-          /* 2. Give every panel a glowing pink border and rounded corners */
-          .panel, .container {
-            border: 2px solid #ff007f !important;
-            box-shadow: 0 0 20px rgba(255, 0, 127, 0.4) !important;
-            border-radius: 20px !important;
-            background: rgba(20, 0, 20, 0.8) !important;
-            backdrop-filter: blur(10px);
-          }
+    //       /* 2. Give every panel a glowing pink border and rounded corners */
+    //       .panel, .container {
+    //         border: 2px solid #ff007f !important;
+    //         box-shadow: 0 0 20px rgba(255, 0, 127, 0.4) !important;
+    //         border-radius: 20px !important;
+    //         background: rgba(20, 0, 20, 0.8) !important;
+    //         backdrop-filter: blur(10px);
+    //       }
   
-          /* 3. Make the server rail stand out with a neon line */
-          .sidebar {
-            border-right: 3px solid #ff007f !important;
-            background: #110011 !important;
-          }
+    //       /* 3. Make the server rail stand out with a neon line */
+    //       .sidebar {
+    //         border-right: 3px solid #ff007f !important;
+    //         background: #110011 !important;
+    //       }
   
-          /* 4. Make all buttons have a "glow" effect */
-          button {
-            border: 1px solid #ff007f !important;
-            text-transform: uppercase;
-            font-weight: bold;
-            letter-spacing: 2px;
-          }
+    //       /* 4. Make all buttons have a "glow" effect */
+    //       button {
+    //         border: 1px solid #ff007f !important;
+    //         text-transform: uppercase;
+    //         font-weight: bold;
+    //         letter-spacing: 2px;
+    //       }
   
-          button.primary {
-            background: #ff007f !important;
-            box-shadow: 0 0 15px #ff007f !important;
-            color: white !important;
-          }
+    //       button.primary {
+    //         background: #ff007f !important;
+    //         box-shadow: 0 0 15px #ff007f !important;
+    //         color: white !important;
+    //       }
   
-          /* 5. Change the text color of titles to neon pink */
-          .section-title, .brand, .center-title {
-            color: #ff007f !important;
-            text-shadow: 0 0 10px #ff007f;
-            font-size: 1.5rem !important;
-          }
+    //       /* 5. Change the text color of titles to neon pink */
+    //       .section-title, .brand, .center-title {
+    //         color: #ff007f !important;
+    //         text-shadow: 0 0 10px #ff007f;
+    //         font-size: 1.5rem !important;
+    //       }
   
-          /* 6. Make labels bright cyan for contrast */
-          label {
-            color: #00ffff !important;
-            font-weight: bold !important;
-          }
-        `,
-    },
+    //       /* 6. Make labels bright cyan for contrast */
+    //       label {
+    //         color: #00ffff !important;
+    //         font-weight: bold !important;
+    //       }
+    //     `,
+    // },
     botToken: config.botToken,
     clientId: config.clientId,
     clientSecret: config.clientSecret,
