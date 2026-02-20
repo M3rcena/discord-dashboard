@@ -1,20 +1,19 @@
 import type { DashboardDesignConfig } from "../../Types";
 
-export const BuiltinThemes: Record<string, DashboardDesignConfig> = {
+export const BuiltinThemes = {
   default: {
-    bg: "#13151a",
-    rail: "#1e1f24",
-    contentBg: "#2b2d31",
-    panel: "#313338",
-    panel2: "#3a3d43",
-    text: "#eef2ff",
-    muted: "#b5bac1",
-    primary: "#5865f2",
-    success: "#20c997",
-    warning: "#f4c95d",
-    danger: "#ff6b6b",
-    info: "#4dabf7",
-    border: "rgba(255, 255, 255, 0.12)",
+    bg: "#08090f",
+    rail: "#0e101a",
+    contentBg: "radial-gradient(circle at top right, #171a2f, #08090f)",
+    panel: "rgba(20, 23, 43, 0.6)",
+    panel2: "rgba(0, 0, 0, 0.3)",
+    text: "#e0e6ff",
+    muted: "#8a93bc",
+    primary: "#5865F2",
+    success: "#00E676",
+    warning: "#FFD600",
+    danger: "#FF3D00",
+    border: "rgba(88, 101, 242, 0.2)",
   },
   compact: {
     bg: "#0f1221",
@@ -44,4 +43,4 @@ export const BuiltinThemes: Record<string, DashboardDesignConfig> = {
     radiusLg: "18px",
     radiusMd: "12px",
   },
-};
+} satisfies Record<string, DashboardDesignConfig>;
