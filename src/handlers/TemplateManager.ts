@@ -11,7 +11,7 @@ export class TemplateManager {
     this.resolvedDesign = this.resolveTheme(options.uiTheme, options.setupDesign);
   }
 
-  private resolveLayout(layoutInput?: string | DashboardTemplateRenderer): DashboardTemplateRenderer {
+  private resolveLayout(layoutInput?: DashboardOptions["uiTemplate"]): DashboardTemplateRenderer {
     if (typeof layoutInput === "function") {
       return layoutInput;
     }
@@ -23,7 +23,7 @@ export class TemplateManager {
     return BuiltinLayouts["default"];
   }
 
-  private resolveTheme(themeInput?: string | DashboardDesignConfig, customOverrides?: DashboardDesignConfig): DashboardDesignConfig {
+  private resolveTheme(themeInput?: DashboardOptions["uiTheme"], customOverrides?: DashboardDesignConfig): DashboardDesignConfig {
     let baseTheme: DashboardDesignConfig = {};
 
     if (typeof themeInput === "string" && BuiltinThemes[themeInput]) {

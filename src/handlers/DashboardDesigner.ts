@@ -114,13 +114,13 @@ export class DashboardDesigner {
     }
   }
 
-  public setLayout(templateName: string) {
-    this.config.uiTemplate = templateName;
+  public setLayout(template: DashboardOptions["uiTemplate"]) {
+    this.config.uiTemplate = template;
     return this;
   }
 
-  public setTheme(themeName: string) {
-    this.config.uiTheme = themeName;
+  public setTheme(theme: DashboardOptions["uiTheme"]) {
+    this.config.uiTheme = theme;
     return this;
   }
 

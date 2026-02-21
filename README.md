@@ -2,19 +2,17 @@
 
 An advanced, plug-and-play Discord dashboard package for bot developers.
 
-Build a fully functional, beautiful web dashboard for your bot without writing a single line of frontend code. Now framework agnostic, this package includes adapters for Express (with Fastify and Elysia support coming), handling the OAuth2 login flow, session management, UI rendering, and API routing out of the box.
+Build a full web dashboard for your bot without writing frontend code. The package provides built-in rendering, Discord OAuth2 flow, and adapters for Express, Elysia, and Fastify.
 
 ## ✨ Features
 
-- **No Frontend Coding:** Generates a beautiful React/Vue-like UI using pure server-side rendering and vanilla JS.
-- **Framework Adapters:** Easily plug into your existing Express server using createExpressAdapter.
-- **Built-in Auth:** Complete Discord OAuth2 login flow with secure session management.
-- **Guild Access Control:** Automatically filters guilds based on `Administrator` or `Manage Server` permissions.
-- **Live Bot Status:** Uses your active Discord.js `Client` to detect if the bot is in a server and dynamically shows "Dashboard" vs "Invite Bot" buttons.
-- **Extensible Plugins:** Create dynamic, runtime-evaluated plugin panels with actionable buttons and forms.
-- **Rich Form Fields:** Support for text, selects, booleans, and drag-and-drop string lists.
-- **Smart Discord Lookups:** Website autocomplete fields for finding Roles, Channels, and Members.
-- **Theming & Templates:** Strict TypeScript autocomplete for built-in themes (`default`, `compact`, `shadcn-magic`) and custom CSS injection.
+- **No frontend app required:** Server-rendered dashboard UI with built-in client script.
+- **Multiple adapters:** `createExpressAdapter`, `createElysiaAdapter`, `createFastifyAdapter`.
+- **Discord OAuth2 flow:** Login, callback exchange, and session persistence.
+- **Theming and layouts:** Built-in layouts/themes (`default`, `compact`, `shadcn-magic`) plus custom renderers.
+- **Home & plugin builders:** Dynamic sections/panels with typed action handlers.
+- **Discord helper API:** Role/channel/member fetch & search helpers inside action context.
+- **TypeScript-first:** Strict typed options, context, fields, and plugin contracts.
 
 ---
 
@@ -27,17 +25,27 @@ Browse built-in templates and screenshot placeholders in [src/templates/template
 ## 📦 Installation
 
 ```bash
-npm install @developer.krd/discord-dashboard
-npm install discord.js express express-session # Peer dependencies
+npm install @developer.krd/discord-dashboard discord.js
 ```
 
-_(This package supports TypeScript, JavaScript, and ESM out of the box. Node.js >= 18 is required)._
+Install only the server stack you use:
+
+```bash
+# Express
+npm install express express-session
+
+# Elysia
+npm install elysia
+
+# Fastify
+npm install fastify @fastify/cookie @fastify/session
+```
+
+Node.js `>=18` is required.
 
 ---
 
-## 🚀 Quick Start (Direct Configuration)
-
-The fastest way to get your dashboard running is by passing your configurations and Discord.js Client directly into the `createExpressAdapter`.
+## 🚀 Quick Start (Express)
 
 ```ts
 import express from "express";
@@ -47,9 +55,9 @@ import { createExpressAdapter } from "@developer.krd/discord-dashboard";
 const app = express();
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-const dashboard = createExpressAdapter({
-  app, // Attach to your existing Express app
-  client, // Required: Injects your DJS client for live cache checking
+createExpressAdapter({
+  app,
+  client,
   basePath: "/dashboard",
   dashboardName: "My Bot Control",
 
@@ -58,9 +66,7 @@ const dashboard = createExpressAdapter({
   clientSecret: process.env.DISCORD_CLIENT_SECRET!,
   redirectUri: "http://localhost:3000/dashboard/callback",
   sessionSecret: process.env.DASHBOARD_SESSION_SECRET!,
-  ownerIds: ["YOUR_DISCORD_USER_ID"],
 
-  // Strict typings for built-in beautiful layouts
   uiTemplate: "shadcn-magic",
   uiTheme: "shadcn-magic",
 
@@ -84,10 +90,10 @@ const dashboard = createExpressAdapter({
         {
           id: "welcome",
           title: "Welcome Settings",
+          categoryId: "general",
           description: context.selectedGuildId ? "Guild-specific setup" : "User-level setup",
           fields: [
             { id: "enabled", label: "Enable Welcome", type: "boolean", value: true },
-            { id: "channel", label: "Channel", type: "channel-search" },
             { id: "message", label: "Message", type: "textarea", value: "Welcome to the server!" },
           ],
           actions: [{ id: "saveWelcome", label: "Save", variant: "primary" }],
@@ -103,51 +109,116 @@ const dashboard = createExpressAdapter({
   },
 });
 
-// Login your bot and start your Express server
-client.login(process.env.DISCORD_BOT_TOKEN).then(() => {
-  app.listen(3000, () => {
-    console.log("Dashboard live at: http://localhost:3000/dashboard");
-  });
+await client.login(process.env.DISCORD_BOT_TOKEN!);
+app.listen(3000, () => {
+  console.log("Dashboard live at: http://localhost:3000/dashboard");
 });
 ```
+
+## 🚀 Quick Start (Elysia)
+
+```ts
+import { Elysia } from "elysia";
+import { Client, GatewayIntentBits } from "discord.js";
+import { createElysiaAdapter } from "@developer.krd/discord-dashboard";
+
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const app = new Elysia();
+
+createElysiaAdapter({
+  app,
+  client,
+  basePath: "/dashboard",
+  dashboardName: "My Bot Control",
+
+  botToken: process.env.DISCORD_BOT_TOKEN!,
+  clientId: process.env.DISCORD_CLIENT_ID!,
+  clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+  redirectUri: "http://localhost:3000/dashboard/callback",
+  sessionSecret: process.env.DASHBOARD_SESSION_SECRET!,
+
+  uiTemplate: "shadcn-magic",
+  uiTheme: "shadcn-magic",
+});
+
+await client.login(process.env.DISCORD_BOT_TOKEN!);
+app.listen({ port: 3000 });
+console.log("Dashboard live at: http://localhost:3000/dashboard");
+```
+
+## 🚀 Quick Start (Fastify)
+
+```ts
+import Fastify from "fastify";
+import fastifyCookie from "@fastify/cookie";
+import fastifySession from "@fastify/session";
+import { Client, GatewayIntentBits } from "discord.js";
+import { createFastifyAdapter } from "@developer.krd/discord-dashboard";
+
+const fastify = Fastify({ logger: true });
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+await fastify.register(fastifyCookie);
+await fastify.register(fastifySession, {
+  secret: process.env.DASHBOARD_SESSION_SECRET!,
+  cookie: { secure: false },
+});
+
+createFastifyAdapter(fastify, {
+  client,
+  basePath: "/dashboard",
+  dashboardName: "My Bot Control",
+
+  botToken: process.env.DISCORD_BOT_TOKEN!,
+  clientId: process.env.DISCORD_CLIENT_ID!,
+  clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+  redirectUri: "http://localhost:3000/dashboard/callback",
+  sessionSecret: process.env.DASHBOARD_SESSION_SECRET!,
+
+  uiTemplate: "shadcn-magic",
+  uiTheme: "shadcn-magic",
+});
+
+await client.login(process.env.DISCORD_BOT_TOKEN!);
+await fastify.listen({ port: 3000, host: "0.0.0.0" });
+console.log("Dashboard live at: http://localhost:3000/dashboard");
+```
+
+---
+
+## 🔌 Adapter Notes
+
+- **Express:** `createExpressAdapter(options)`
+- **Elysia:** `createElysiaAdapter(options)`
+- **Fastify:** `createFastifyAdapter(fastify, options)`
+
+For Fastify, you must register `@fastify/cookie` and `@fastify/session` before wiring the adapter, since dashboard routes read/write `request.session`.
 
 ---
 
 ## 🛠️ Extensible Plugins
 
-Plugins are modular features you can attach to the dashboard. They utilize a dynamic `getPanels` function so you can render data specific to the logged-in user or selected guild!
-
-**Example: Runtime & Diagnostics Plugin**
-
 ```ts
-import { createExpressAdapter } from "@developer.krd/discord-dashboard";
-
 createExpressAdapter({
-  // ... core credentials and client ...
+  // ... core config ...
   plugins: [
     {
       id: "runtime",
       name: "System Runtime",
       description: "Live bot diagnostics",
-      // Dynamically generate panels based on context
-      getPanels: async (context) => [
+      getPanels: async () => [
         {
           id: "runtime-status",
           title: "Diagnostics",
           fields: [
-            { id: "user", label: "Logged in as", type: "text", value: client.user?.tag, readOnly: true },
-            { id: "uptime", label: "Uptime", type: "text", value: `${Math.floor(process.uptime())}s`, readOnly: true },
+            { label: "Logged in as", value: client.user?.tag ?? "Unknown" },
+            { label: "Uptime", value: `${Math.floor(process.uptime())}s` },
           ],
-          // Tells the UI to render a button
           actions: [{ id: "refreshRuntime", label: "Refresh", variant: "primary", collectFields: false }],
         },
       ],
-      // Tells the backend how to handle the button click
       actions: {
-        refreshRuntime: async (context, body) => {
-          // Returning refresh: true tells the frontend to re-fetch getPanels and update the UI!
-          return { ok: true, message: "Data refreshed!", refresh: true };
-        },
+        refreshRuntime: async () => ({ ok: true, message: "Data refreshed", refresh: true }),
       },
     },
   ],
@@ -158,27 +229,24 @@ createExpressAdapter({
 
 ## 🧩 Built-in Helper Functions
 
-Whenever you handle an action (in `home.actions` or `plugin.actions`), you get access to the `context.helpers` object. These automatically use the user's access token or bot token to fetch data from the Discord API safely.
+Inside `home.actions` and `plugins.actions`, use `context.helpers`:
 
 - `getGuildIconUrl(guildId, iconHash)`
 - `getUserAvatarUrl(userId, avatarHash)`
 - `getChannel(channelId)`
 - `getGuildChannels(guildId)`
+- `searchGuildChannels(guildId, query, options?)`
 - `getRole(guildId, roleId)`
 - `getGuildRoles(guildId)`
+- `searchGuildRoles(guildId, query, options?)`
+- `searchGuildMembers(guildId, query, options?)`
 - `getGuildMember(guildId, userId)`
 
 ---
 
-## 🔍 Lookup Fields (Discord Entities)
+## 🔍 Lookup Fields
 
-Instead of forcing users to copy/paste IDs, use lookup fields to provide a rich website autocomplete experience.
-
-- `type: "role-search"`: Type a role name, select it, and the action receives the full Role object.
-- `type: "channel-search"`: Type a channel name.
-- `type: "member-search"`: Type a username or nickname.
-
-You can configure lookups with filters:
+Field types include `role-search`, `channel-search`, and `member-search`, and you can provide lookup options in field config (for limits and filters).
 
 ```ts
 {
@@ -187,8 +255,8 @@ You can configure lookups with filters:
   type: "channel-search",
   lookup: {
     limit: 5,
-    channelTypes: [0, 5] // 0 = GUILD_TEXT, 5 = GUILD_ANNOUNCEMENT
-  }
+    channelTypes: [0, 5],
+  },
 }
 ```
 
@@ -196,30 +264,28 @@ You can configure lookups with filters:
 
 ## 📚 API Reference
 
-### `DashboardOptions` Interface
+`DashboardOptions` includes:
 
-Passed into `createExpressAdapter(options)`.
+- OAuth/session config (`clientId`, `clientSecret`, `redirectUri`, `sessionSecret`, ...)
+- Dashboard presentation (`dashboardName`, `basePath`, `uiTemplate`, `uiTheme`, `setupDesign`)
+- Dynamic content (`getOverviewCards`, `home`, `plugins`)
+- Runtime dependencies (`client`, optional framework app where supported)
 
-- `app`: Your Express/Fastify/Elysia instance.
-- `client`: **(Required)** Your logged-in `discord.js` Client.
-- `basePath`: The mount URL for the dashboard (e.g., `/dashboard`).
-- `uiTemplate` / `uiTheme`: Built-in visual layouts (`"default"`, `"compact"`, `"shadcn-magic"`).
-- `setupDesign`: Object to override specific CSS variable hex codes (e.g., `{ primary: "#ff0000" }`).
-- `home`: Object containing `getSections()` and actions for the main dashboard view.
-- `plugins`: Array of `DashboardPlugin` objects for modular extensions.
+Also exported:
+
+- `DashboardEngine`
+- `DashboardDesigner`
 
 ---
 
 ## 🔒 Required Discord OAuth2 Setup
 
-To make login work:
-
 1. Go to the [Discord Developer Portal](https://discord.com/developers/applications).
-2. Open your Application -> **OAuth2**.
-3. Add your Redirect URI (e.g., `http://localhost:3000/dashboard/callback`).
-4. Grab your `CLIENT_ID` and `CLIENT_SECRET` to use in your dashboard config.
+2. Open your Application → **OAuth2**.
+3. Add your redirect URI (example: `http://localhost:3000/dashboard/callback`).
+4. Use your `CLIENT_ID` and `CLIENT_SECRET` in dashboard config.
 
-_Note: Ensure your `sessionSecret` is a long, random string in production, and run your bot behind HTTPS._
+Use a strong `sessionSecret` in production and serve behind HTTPS.
 
 ---
 
