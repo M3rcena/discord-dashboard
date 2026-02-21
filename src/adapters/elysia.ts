@@ -49,17 +49,15 @@ export function createElysiaAdapter(options: DashboardOptions) {
         schema: SessionSchema,
       }),
     )
-    .derive(({ set }) => ({
-      html: (content: string) => {
-        set.headers["Content-Type"] = "text/html; charset=utf8";
-        return content;
-      },
-    }))
-    .get("/", async ({ sessionSigner, cookie, redirect, html }) => {
+    .get("/", async ({ sessionSigner, cookie, redirect }) => {
       const sessionData = await getSession(sessionSigner, cookie);
       if (!sessionData || !sessionData.discordAuth) return redirect(`${basePath}/login`);
 
-      return html(engine.render(basePath));
+      return new Response(engine.render(basePath), {
+        headers: {
+          "content-type": "text/html; charset=utf-8",
+        },
+      });
     })
     .get("/login", async ({ sessionSigner, cookie, redirect }) => {
       const state = randomBytes(16).toString("hex");
