@@ -6,6 +6,7 @@ const UserSchema = t.Object({
   discriminator: t.String(),
   avatar: t.Nullable(t.String()),
   global_name: t.Optional(t.Nullable(t.String())),
+  avatarUrl: t.Optional(t.Nullable(t.String())),
 });
 
 const GuildSchema = t.Object({
@@ -15,8 +16,8 @@ const GuildSchema = t.Object({
   owner: t.Boolean(),
   permissions: t.String(),
   iconUrl: t.Optional(t.Nullable(t.String())),
-  botInGuild: t.Optional(t.Nullable(t.Boolean())),
-  inviteUrl: t.Optional(t.Nullable(t.String())),
+  botInGuild: t.Optional(t.Boolean()),
+  inviteUrl: t.Optional(t.String()),
 });
 
 export const SessionSchema = t.Object({
