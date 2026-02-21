@@ -42,6 +42,7 @@ export interface DashboardPlugin {
   name: string;
   description?: string;
   scope?: DashboardScope | "both";
-  getPanels: (context: DashboardContext) => Promise<PluginPanel[]> | PluginPanel[];
+  panels?: PluginPanel[];
+  getPanels?: (context: DashboardContext) => Promise<PluginPanel[]> | PluginPanel[];
   actions?: Record<string, (context: DashboardContext, body: unknown) => Promise<PluginActionResult> | PluginActionResult>;
 }

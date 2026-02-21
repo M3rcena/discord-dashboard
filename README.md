@@ -2,19 +2,19 @@
 
 An advanced, plug-and-play Discord dashboard package for bot developers.
 
-Build a fully functional, beautiful web dashboard for your bot without writing a single line of frontend code. Powered by Express, this package handles the OAuth2 login flow, session management, UI rendering, and API routing out of the box.
+Build a fully functional, beautiful web dashboard for your bot without writing a single line of frontend code. Now framework agnostic, this package includes adapters for Express (with Fastify and Elysia support coming), handling the OAuth2 login flow, session management, UI rendering, and API routing out of the box.
 
 ## ✨ Features
 
-- **No Frontend Coding:** Generates a beautiful React/Vue-like UI using pure server-side rendering.
+- **No Frontend Coding:** Generates a beautiful React/Vue-like UI using pure server-side rendering and vanilla JS.
+- **Framework Adapters:** Easily plug into your existing Express server using createExpressAdapter.
 - **Built-in Auth:** Complete Discord OAuth2 login flow with secure session management.
-- **Guild Access Control:** Automatically filters guilds based on admin/manage server permissions.
-- **Fluent Designer API:** Build your dashboard cleanly using a chainable builder pattern.
-- **Custom CSS Injection:** Fully theme the dashboard to match your bot's branding.
-- **Extensible Plugins:** Create separate plugin panels with actionable buttons and forms.
+- **Guild Access Control:** Automatically filters guilds based on `Administrator` or `Manage Server` permissions.
+- **Live Bot Status:** Uses your active Discord.js `Client` to detect if the bot is in a server and dynamically shows "Dashboard" vs "Invite Bot" buttons.
+- **Extensible Plugins:** Create dynamic, runtime-evaluated plugin panels with actionable buttons and forms.
 - **Rich Form Fields:** Support for text, selects, booleans, and drag-and-drop string lists.
 - **Smart Discord Lookups:** Website autocomplete fields for finding Roles, Channels, and Members.
-- **Discord-like UI:** Familiar server rail with avatars and invite-on-click for missing guilds.
+- **Theming & Templates:** Strict TypeScript autocomplete for built-in themes (`default`, `compact`, `shadcn-magic`) and custom CSS injection.
 
 ---
 
@@ -28,6 +28,7 @@ Browse built-in templates and screenshot placeholders in [src/templates/template
 
 ```bash
 npm install @developer.krd/discord-dashboard
+npm install discord.js express express-session # Peer dependencies
 ```
 
 _(This package supports TypeScript, JavaScript, and ESM out of the box. Node.js >= 18 is required)._
@@ -36,18 +37,22 @@ _(This package supports TypeScript, JavaScript, and ESM out of the box. Node.js 
 
 ## 🚀 Quick Start (Direct Configuration)
 
-The fastest way to get your dashboard running is by instantiating the `DiscordDashboard` class directly.
+The fastest way to get your dashboard running is by passing your configurations and Discord.js Client directly into the `createExpressAdapter`.
 
 ```ts
 import express from "express";
-import { DiscordDashboard } from "@developer.krd/discord-dashboard";
+import { Client, GatewayIntentBits } from "discord.js";
+import { createExpressAdapter } from "@developer.krd/discord-dashboard";
 
 const app = express();
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-const dashboard = new DiscordDashboard({
+const dashboard = createExpressAdapter({
   app, // Attach to your existing Express app
+  client, // Required: Injects your DJS client for live cache checking
   basePath: "/dashboard",
   dashboardName: "My Bot Control",
+
   botToken: process.env.DISCORD_BOT_TOKEN!,
   clientId: process.env.DISCORD_CLIENT_ID!,
   clientSecret: process.env.DISCORD_CLIENT_SECRET!,
@@ -55,13 +60,16 @@ const dashboard = new DiscordDashboard({
   sessionSecret: process.env.DASHBOARD_SESSION_SECRET!,
   ownerIds: ["YOUR_DISCORD_USER_ID"],
 
+  // Strict typings for built-in beautiful layouts
+  uiTemplate: "shadcn-magic",
+  uiTheme: "shadcn-magic",
+
   getOverviewCards: async (context) => [
     {
       id: "uptime",
       title: "Bot Uptime",
       value: `${Math.floor(process.uptime() / 60)} min`,
       subtitle: `Logged in as ${context.user.username}`,
-      intent: "success",
     },
     {
       id: "guilds",
@@ -95,136 +103,70 @@ const dashboard = new DiscordDashboard({
   },
 });
 
-// Start your Express server normally
-app.listen(3000, () => {
-  console.log("Dashboard live at: http://localhost:3000/dashboard");
+// Login your bot and start your Express server
+client.login(process.env.DISCORD_BOT_TOKEN).then(() => {
+  app.listen(3000, () => {
+    console.log("Dashboard live at: http://localhost:3000/dashboard");
+  });
 });
 ```
 
 ---
 
-## 🎨 Fluent Dashboard Designer (Recommended)
+## 🛠️ Extensible Plugins
 
-For larger bots, putting all your configuration in one object gets messy. Use the `DashboardDesigner` class to build your dashboard modularly.
+Plugins are modular features you can attach to the dashboard. They utilize a dynamic `getPanels` function so you can render data specific to the logged-in user or selected guild!
 
-This approach also allows you to easily inject **Custom CSS** and define dashboard colors.
-
-```ts
-import express from "express";
-import { DashboardDesigner } from "@developer.krd/discord-dashboard";
-
-const app = express();
-
-const dashboard = new DashboardDesigner({
-  app,
-  botToken: process.env.DISCORD_BOT_TOKEN!,
-  clientId: process.env.DISCORD_CLIENT_ID!,
-  clientSecret: process.env.DISCORD_CLIENT_SECRET!,
-  redirectUri: "http://localhost:3000/dashboard/callback",
-  sessionSecret: process.env.DASHBOARD_SESSION_SECRET!,
-})
-  .setup({
-    ownerIds: ["1234567890"],
-    botInvitePermissions: "8",
-  })
-  // Customize the default color palette
-  .setupDesign({
-    primary: "#4f46e5",
-    rail: "#181a20",
-    panel: "#2f3136",
-  })
-  // Inject your own CSS rules
-  .customCss(
-    `
-    .brand { font-size: 1.2rem; text-transform: uppercase; }
-    button.primary { box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); }
-  `,
-  )
-  // Build a Guild-specific settings category
-  .guildCategory("pets", "Pets", (category) => {
-    category.section({
-      id: "pets-guild",
-      title: "Guild Pets",
-      fields: [{ id: "petsChannelId", label: "Pets Channel", type: "channel-search" }],
-      actions: [{ id: "saveGuildPets", label: "Save", variant: "primary" }],
-    });
-  })
-  // Handle the save action
-  .onHomeAction("saveGuildPets", async (context, payload) => {
-    const channelId = String(payload.values.petsChannelId ?? "");
-    const channel = await context.helpers.getChannel(channelId);
-    if (!channel) return { ok: false, message: "Channel not found" };
-    return { ok: true, message: "Saved successfully!", refresh: true };
-  })
-  // Automatically instantiates the DiscordDashboard class
-  .createDashboard();
-
-app.listen(3000, () => console.log("Dashboard ready!"));
-```
-
----
-
-## 🧩 Built-in Helper Functions
-
-Whenever you handle an action (`onHomeAction` or inside a Plugin), you get access to the `context.helpers` object. These automatically use the bot token to fetch data from the Discord API.
-
-- `getChannel(channelId)`
-- `getGuildChannels(guildId)`
-- `getRole(guildId, roleId)`
-- `getGuildRoles(guildId)`
-- `getGuildMember(guildId, userId)`
-- `searchGuildRoles(guildId, query, options)`
-- `searchGuildChannels(guildId, query, options)`
-
----
-
-## 🛠️ Plugin Scopes & Forms
-
-Plugins are modular features you can attach to the dashboard. They can be restricted to specific scopes.
-
-- `scope: "user"` → Shows only on the User Dashboard (when no server is selected).
-- `scope: "guild"` → Shows only on the Guild Dashboard.
-- `scope: "both"` → (Default) Shows everywhere.
-
-### Example: Ticket Panel Builder Plugin
+**Example: Runtime & Diagnostics Plugin**
 
 ```ts
-import { DiscordDashboard } from "@developer.krd/discord-dashboard";
+import { createExpressAdapter } from "@developer.krd/discord-dashboard";
 
-const dashboard = new DiscordDashboard({
-  // ... core credentials ...
+createExpressAdapter({
+  // ... core credentials and client ...
   plugins: [
     {
-      id: "tickets",
-      name: "Tickets",
-      scope: "guild",
-      getPanels: async () => [
+      id: "runtime",
+      name: "System Runtime",
+      description: "Live bot diagnostics",
+      // Dynamically generate panels based on context
+      getPanels: async (context) => [
         {
-          id: "ticket-panel",
-          title: "Ticket Panel Generator",
+          id: "runtime-status",
+          title: "Diagnostics",
           fields: [
-            { id: "targetChannel", label: "Target Channel", type: "channel-search", editable: true },
-            { id: "title", label: "Embed Title", type: "text", editable: true, value: "Need help?" },
-            { id: "description", label: "Embed Description", type: "textarea", editable: true },
-            { id: "buttonLabel", label: "Button Label", type: "text", editable: true, value: "Open Ticket" },
+            { id: "user", label: "Logged in as", type: "text", value: client.user?.tag, readOnly: true },
+            { id: "uptime", label: "Uptime", type: "text", value: `${Math.floor(process.uptime())}s`, readOnly: true },
           ],
-          actions: [{ id: "publishTicket", label: "Publish to Channel", variant: "primary", collectFields: true }],
+          // Tells the UI to render a button
+          actions: [{ id: "refreshRuntime", label: "Refresh", variant: "primary", collectFields: false }],
         },
       ],
+      // Tells the backend how to handle the button click
       actions: {
-        publishTicket: async (context, body) => {
-          // body.values contains the form data because collectFields was true
-          const data = body as { values?: Record<string, unknown> };
-          const values = data.values ?? {};
-
-          console.log(`Creating ticket panel in ${values.targetChannel}`);
-          return { ok: true, message: `Ticket panel published!`, data: values };
+        refreshRuntime: async (context, body) => {
+          // Returning refresh: true tells the frontend to re-fetch getPanels and update the UI!
+          return { ok: true, message: "Data refreshed!", refresh: true };
         },
       },
     },
   ],
 });
 ```
+
+---
+
+## 🧩 Built-in Helper Functions
+
+Whenever you handle an action (in `home.actions` or `plugin.actions`), you get access to the `context.helpers` object. These automatically use the user's access token or bot token to fetch data from the Discord API safely.
+
+- `getGuildIconUrl(guildId, iconHash)`
+- `getUserAvatarUrl(userId, avatarHash)`
+- `getChannel(channelId)`
+- `getGuildChannels(guildId)`
+- `getRole(guildId, roleId)`
+- `getGuildRoles(guildId)`
+- `getGuildMember(guildId, userId)`
 
 ---
 
@@ -254,22 +196,17 @@ You can configure lookups with filters:
 
 ## 📚 API Reference
 
-### `DashboardDesigner` Methods
+### `DashboardOptions` Interface
 
-- **`setup(options)`**: Set core info (`ownerIds`, `dashboardName`, `basePath`, `uiTemplate`).
-- **`setupDesign(config)`**: Override theme colors (e.g., `primary`, `bg`, `panel`).
-- **`customCss(cssString)`**: Inject raw CSS to completely customize the dashboard.
-- **`setupCategory(id, label, build)`**: Add tabs to the one-time setup view.
-- **`userCategory(id, label, build)`**: Add tabs to the user dashboard.
-- **`guildCategory(id, label, build)`**: Add tabs to the server dashboard.
-- **`onHomeAction(actionId, handler)`**: Define what happens when a button is clicked.
-- **`createDashboard()`**: Terminal method. Builds the config and returns a `DiscordDashboard` instance.
+Passed into `createExpressAdapter(options)`.
 
-### `DiscordDashboard` Methods
-
-- **`app`**: The Express instance (either the one you provided, or a newly created one).
-- **`start()`**: Starts the internal HTTP server (only if you didn't pass your own Express app).
-- **`stop()`**: Gracefully shuts down the internal server.
+- `app`: Your Express/Fastify/Elysia instance.
+- `client`: **(Required)** Your logged-in `discord.js` Client.
+- `basePath`: The mount URL for the dashboard (e.g., `/dashboard`).
+- `uiTemplate` / `uiTheme`: Built-in visual layouts (`"default"`, `"compact"`, `"shadcn-magic"`).
+- `setupDesign`: Object to override specific CSS variable hex codes (e.g., `{ primary: "#ff0000" }`).
+- `home`: Object containing `getSections()` and actions for the main dashboard view.
+- `plugins`: Array of `DashboardPlugin` objects for modular extensions.
 
 ---
 
